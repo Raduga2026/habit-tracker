@@ -2,16 +2,30 @@
 <html lang="ru">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/svg+xml" href="/icon-192x192.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- PWA / Web App meta -->
     <meta name="theme-color" content="#ec4899" />
-    <meta name="description" content="PWA приложение для отслеживания личных привычек" />
+    <meta name="application-name" content="Мой Путь" />
+    <meta name="description" content="Приложение для отслеживания личных привычек с любовью к себе" />
+
+    <!-- iOS -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Мой Путь" />
-    <link rel="apple-touch-icon" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" href="/icon-192x192.svg" />
+
+    <!-- Windows -->
+    <meta name="msapplication-TileColor" content="#ec4899" />
+    <meta name="msapplication-TileImage" content="/icon-192x192.svg" />
+
     <link rel="manifest" href="/manifest.json" />
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Telegram Mini App SDK (активируется только внутри Telegram) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
     <title>Мой Путь — Трекер привычек</title>
   </head>
   <body>

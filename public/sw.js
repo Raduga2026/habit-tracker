@@ -11,7 +11,6 @@ const ASSETS_TO_CACHE = [
 
 // Установка service worker
 self.addEventListener('install', (event) => {
-  console.log('Service Worker установлен');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE).catch(() => {
@@ -24,16 +23,12 @@ self.addEventListener('install', (event) => {
 
 // Активация service worker
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker активирован');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames
           .filter((name) => name !== CACHE_NAME && name !== RUNTIME_CACHE)
-          .map((name) => {
-            console.log('Удаление старого кеша:', name);
-            return caches.delete(name);
-          })
+          .map((name) => caches.delete(name))
       );
     })
   );
@@ -120,8 +115,8 @@ self.addEventListener('push', (event) => {
 
   const options = {
     body: event.data.text(),
-    icon: '/icon-192x192.png',
-    badge: '/icon-192x192.png',
+    icon: '/icon-192x192.svg',
+    badge: '/icon-192x192.svg',
     tag: 'habit-reminder',
     requireInteraction: false,
     actions: [

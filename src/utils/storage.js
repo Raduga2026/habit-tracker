@@ -21,12 +21,12 @@ export const DEFAULT_HABITS = [
   },
   {
     id: 'h3',
-    title: 'Спиральная динамика (5-7 упражнений)',
-    emoji: '🌀',
+    title: 'Утренняя гимнастика-разминка',
+    emoji: '🤸',
     timeOfDay: 'morning',
     isDefault: true,
     isActive: true,
-    description: 'Практика гармонии тела и сознания'
+    description: 'Зарядка и разминка для бодрого начала дня'
   },
   {
     id: 'h4',
@@ -35,7 +35,7 @@ export const DEFAULT_HABITS = [
     timeOfDay: 'morning',
     isDefault: true,
     isActive: true,
-    description: 'Кто Я? Что полезного я сделаю? Что полезного для других?'
+    description: 'Что полезного я сделаю сегодня для себя? Что полезного для других?'
   },
   // Daytime block
   {
@@ -97,6 +97,7 @@ const STORAGE_KEYS = {
 // Initialize default user
 export const DEFAULT_USER = {
   name: '',
+  gender: 'female',
   startDate: new Date().toISOString().split('T')[0],
   affirmation: 'Я люблю и берегу себя',
   theme: 'light',

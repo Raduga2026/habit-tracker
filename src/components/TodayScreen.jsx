@@ -1,15 +1,16 @@
 import React, { useState } from 'react';
 import { getTodayString, formatDate, formatDayName, getDailyProgress, getHabitsByTimeOfDay } from '../utils/dateHelpers';
 import { useLogs, useUser } from '../hooks/useStorage';
+import { useTheme } from '../context/ThemeContext';
 import { logsStorage } from '../utils/storage';
 import Confetti from './Confetti';
 import HabitGroup from './HabitGroup';
-import ProgressBar from './ProgressBar';
 
 export default function TodayScreen() {
   const today = getTodayString();
   const { logs, toggleHabit } = useLogs();
   const { user } = useUser();
+  const { theme } = useTheme();
   const [showConfetti, setShowConfetti] = useState(false);
 
   const progress = getDailyProgress(today);
@@ -17,37 +18,31 @@ export default function TodayScreen() {
   const todayLog = logs[today] || { habits: {} };
 
   const handleToggleHabit = (habitId) => {
-    // special cases for reflections
     if (habitId === 'h4') {
-      // series of questions for morning reflection
-      const q1 = window.prompt('Кто "Я"?', '');
+      const q1 = window.prompt('Что полезного Я сделаю сегодня для себя?', '');
       if (q1 === null) return;
-      const q2 = window.prompt('Что полезного я сегодня сделаю для себя?', '');
+      const q2 = window.prompt('Что полезного хочу сделать для других сегодня?', '');
       if (q2 === null) return;
-      const q3 = window.prompt('Что полезного хочу сделать для других сегодня?', '');
+      const q3 = window.prompt('Что я хочу изменить в себе сегодня?', '');
       if (q3 === null) return;
-      const q4 = window.prompt('Что я хочу изменить в себе сегодня?', '');
-      if (q4 === null) return;
-      logsStorage.updateDate(today, { morningReflection: { q1, q2, q3, q4 } });
+      logsStorage.updateDate(today, { morningReflection: { q1, q2, q3 } });
       toggleHabit(today, habitId);
       return;
     }
     if (habitId === 'h7') {
-      // series of questions for evening reflection
-      const q1 = window.prompt('За что сегодня благодарна себе?', '');
+      const q1 = window.prompt('За что сегодня благодарен(а) себе?', '');
       if (q1 === null) return;
-      const q2 = window.prompt('Что сделала хорошего для других?', '');
+      const q2 = window.prompt('Что сделал(а) хорошего для других?', '');
       if (q2 === null) return;
       const q3 = window.prompt('Что у меня сегодня получилось хорошо?', '');
       if (q3 === null) return;
-      const q4 = window.prompt('Чем я недовольна собой сегодня?', '');
+      const q4 = window.prompt('Чем я недоволен(а) собой сегодня?', '');
       if (q4 === null) return;
       logsStorage.updateDate(today, { eveningReflection: { q1, q2, q3, q4 } });
       toggleHabit(today, habitId);
       return;
     }
     if (habitId === 'h8') {
-      // mood selector
       const moods = ['😃','🙂','😐','😟','😢'];
       const choice = window.prompt(
         'Выбери настроение (1–5):\n1 😃\n2 🙂\n3 😐\n4 😟\n5 😢',
@@ -63,7 +58,6 @@ export default function TodayScreen() {
     const wasCompleted = todayLog.habits[habitId];
     toggleHabit(today, habitId);
 
-    // Check if this completes the day
     if (!wasCompleted) {
       const newProgress = { ...progress };
       newProgress.completed += 1;
@@ -77,40 +71,44 @@ export default function TodayScreen() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-peach-50 to-mint-50 pb-24">
+    <div className={`min-h-screen ${theme.appBg} pb-24`}>
       {showConfetti && <Confetti />}
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-rose-400 to-peach-400 text-white p-6 sm:p-8 rounded-b-3xl shadow-lg">
+      <div className={`${theme.headerBg} text-white p-6 sm:p-8 rounded-b-3xl shadow-lg`}>
         <div className="max-w-md mx-auto">
-          <div className="text-sm opacity-90 font-medium">{formatDate(today)}</div>
-          <div className="text-3xl sm:text-4xl font-bold capitalize mb-3">
-            {formatDayName(today)}
+          <div className="text-sm font-medium opacity-80 tracking-wide uppercase">
+            {formatDate(today)} · {formatDayName(today)}
           </div>
           {user.name && (
-            <div className="text-lg sm:text-xl">
-              ✨ Привет, {user.name}!
+            <div className="text-2xl sm:text-3xl italic font-semibold mt-2">
+              Привет {user.name}!
             </div>
           )}
         </div>
       </div>
 
       {/* Content */}
-      <div className="max-w-md mx-auto px-4 py-6 space-y-6">
+      <div className="max-w-md mx-auto px-4 py-6 space-y-5">
         {/* Progress */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-sm font-semibold text-gray-600">Прогресс дня</span>
-            <span className="text-lg font-bold text-rose-600 bg-rose-50 px-4 py-1 rounded-full">
+        <div className={`${theme.progressCardBg} rounded-3xl p-5 shadow-sm`}>
+          <div className="flex justify-between items-center mb-3">
+            <span className={`text-sm font-semibold ${theme.cardText}`}>Прогресс дня</span>
+            <span className={`text-base font-bold ${theme.progressTextAccent} ${theme.progressBgAccent} px-4 py-1 rounded-full`}>
               {progress.completed}/{progress.total}
             </span>
           </div>
-          <ProgressBar percentage={progress.percentage} />
-          <div className="mt-4 text-center">
-            <div className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-rose-400 to-mint-400">
+          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${theme.progressBarClass} transition-all duration-700 ease-out`}
+              style={{ width: `${progress.percentage}%` }}
+            ></div>
+          </div>
+          <div className="mt-3 text-center">
+            <div className={`text-3xl font-bold ${theme.progressTextAccent}`}>
               {progress.percentage}%
             </div>
-            <div className="text-xs text-gray-500 mt-1">
+            <div className={`text-xs mt-1 ${theme.cardText} opacity-60`}>
               {progress.percentage === 100 ? '🎉 Отлично сегодня!' : 'выполнено'}
             </div>
           </div>

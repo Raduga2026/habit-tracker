@@ -4,6 +4,7 @@ import { userStorage, onboardingStorage } from '../utils/storage';
 export default function OnboardingScreen({ onComplete }) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState('');
+  const [gender, setGender] = useState('female');
 
   const steps = [
     {
@@ -51,7 +52,7 @@ export default function OnboardingScreen({ onComplete }) {
         <div className="space-y-4 slide-up">
           <input
             type="text"
-            placeholder="Напиши свое имя"
+            placeholder="Напиши своё имя"
             value={name}
             onChange={e => setName(e.target.value)}
             className="w-full text-center text-lg"
@@ -64,12 +65,49 @@ export default function OnboardingScreen({ onComplete }) {
       )
     },
     {
-      title: '🚀 Готова начать?',
+      title: '🎨 Выбери оформление',
+      description: 'Персонализируй внешний вид приложения',
+      content: (
+        <div className="space-y-4 slide-up">
+          <div className="grid grid-cols-2 gap-4">
+            <button
+              onClick={() => setGender('female')}
+              className={`rounded-3xl p-5 border-4 transition-all text-center ${
+                gender === 'female'
+                  ? 'border-rose-400 scale-105 shadow-lg'
+                  : 'border-transparent opacity-80'
+              } bg-gradient-to-br from-rose-200 to-orange-200`}
+            >
+              <div className="text-4xl mb-2">🌸</div>
+              <div className="font-semibold text-rose-800 text-sm">Розовая</div>
+              <div className="text-xs text-rose-600 mt-1">Тёплые тона</div>
+            </button>
+            <button
+              onClick={() => setGender('male')}
+              className={`rounded-3xl p-5 border-4 transition-all text-center ${
+                gender === 'male'
+                  ? 'border-cyan-400 scale-105 shadow-lg'
+                  : 'border-transparent opacity-80'
+              } bg-gradient-to-br from-blue-700 to-indigo-800`}
+            >
+              <div className="text-4xl mb-2">🌊</div>
+              <div className="font-semibold text-white text-sm">Синяя</div>
+              <div className="text-xs text-cyan-200 mt-1">Холодные тона</div>
+            </button>
+          </div>
+          <p className="text-sm text-gray-500 text-center">
+            Всегда можно изменить в настройках профиля
+          </p>
+        </div>
+      )
+    },
+    {
+      title: '🚀 Готов(а) начать?',
       description: 'Последний шаг',
       content: (
         <div className="space-y-6 text-center slide-up">
           <p className="text-gray-600 text-lg">
-            Тебя ждут привычки, разделенные на три блока:
+            Тебя ждут привычки, разделённые на три блока:
           </p>
           <div className="space-y-3">
             <div className="p-4 bg-rose-50 rounded-2xl border-2 border-rose-200">
@@ -96,8 +134,7 @@ export default function OnboardingScreen({ onComplete }) {
     if (step < steps.length - 1) {
       setStep(step + 1);
     } else {
-      // Save user and complete onboarding
-      userStorage.update({ name: name || 'Путница' });
+      userStorage.update({ name: name || 'Друг', gender });
       onboardingStorage.complete();
       onComplete?.();
     }
@@ -108,8 +145,9 @@ export default function OnboardingScreen({ onComplete }) {
       setStep(step - 1);
     }
   };
+
   const isLastStep = step === steps.length - 1;
-  const canContinue = step < 2 || (step === 2 && name.trim()) || step === 3;
+  const canContinue = step < 2 || (step === 2 && name.trim()) || step >= 3;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-50 via-peach-50 to-mint-50 flex flex-col items-center justify-center p-4">
@@ -161,13 +199,9 @@ export default function OnboardingScreen({ onComplete }) {
               }`}
             >
               {isLastStep ? (
-                <>
-                  ✨ Начать <span className="ml-1">→</span>
-                </>
+                <>✨ Начать <span className="ml-1">→</span></>
               ) : (
-                <>
-                  Далее <span className="ml-1">→</span>
-                </>
+                <>Далее <span className="ml-1">→</span></>
               )}
             </button>
           </div>
@@ -178,7 +212,7 @@ export default function OnboardingScreen({ onComplete }) {
           <div className="text-center mt-6">
             <button
               onClick={() => {
-                userStorage.update({ name: 'Путница' });
+                userStorage.update({ name: 'Друг', gender: 'female' });
                 onboardingStorage.complete();
                 onComplete?.();
               }}
