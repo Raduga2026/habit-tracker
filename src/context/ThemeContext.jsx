@@ -38,6 +38,12 @@ export const themes = {
     dividerClass: 'bg-gradient-to-r from-transparent via-rose-200 to-transparent',
     aboutCardBg: 'bg-gradient-to-br from-rose-50 to-peach-50 border-2 border-rose-100',
     timeInputBorder: 'border-2 border-rose-200',
+    badgeUnlocked: 'bg-gradient-to-br from-rose-50 to-peach-50 border-2 border-rose-300',
+    badgeLocked: 'bg-gray-100 border-2 border-gray-200 opacity-50',
+    xpBarClass: 'bg-gradient-to-r from-rose-400 to-peach-400',
+    xpCardBg: 'bg-gradient-to-br from-rose-50 to-peach-50 border border-rose-100',
+    levelTextColor: 'text-rose-600',
+    kpiCardBg: 'bg-white border border-rose-100',
   },
   male: {
     appBg: 'bg-gradient-to-b from-[#0d2235] to-[#173848]',
@@ -75,6 +81,12 @@ export const themes = {
     dividerClass: 'bg-gradient-to-r from-transparent via-[#2a4a6c] to-transparent',
     aboutCardBg: 'bg-[#1e3a5c] border-2 border-[#2a4a6c]',
     timeInputBorder: 'border-2 border-[#2a4a6c]',
+    badgeUnlocked: 'bg-gradient-to-br from-cyan-900/40 to-blue-900/40 border-2 border-cyan-600',
+    badgeLocked: 'bg-[#1a2a3a] border-2 border-[#2a3a4a] opacity-50',
+    xpBarClass: 'bg-gradient-to-r from-cyan-400 to-blue-500',
+    xpCardBg: 'bg-[#1e3a5c] border border-[#2a4a6c]',
+    levelTextColor: 'text-cyan-400',
+    kpiCardBg: 'bg-[#1e3a5c] border border-[#2a4a6c]',
   }
 };
 

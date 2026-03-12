@@ -91,7 +91,13 @@ const STORAGE_KEYS = {
   USER: 'habit_tracker_user_v1',
   HABITS: 'habit_tracker_habits_v1',
   LOGS: 'habit_tracker_logs_v1',
-  ONBOARDED: 'habit_tracker_onboarded_v1'
+  ONBOARDED: 'habit_tracker_onboarded_v1',
+  ACHIEVEMENTS: 'habit_tracker_achievements_v1'
+};
+
+const DEFAULT_ACHIEVEMENTS = {
+  unlockedIds: [],
+  lastStreakSeen: 0
 };
 
 // Initialize default user
@@ -182,6 +188,29 @@ export const logsStorage = {
   }
 };
 
+// Achievements storage
+export const achievementsStorage = {
+  get: () => {
+    const stored = localStorage.getItem(STORAGE_KEYS.ACHIEVEMENTS);
+    return stored ? JSON.parse(stored) : { ...DEFAULT_ACHIEVEMENTS };
+  },
+  set: (data) => {
+    localStorage.setItem(STORAGE_KEYS.ACHIEVEMENTS, JSON.stringify(data));
+  },
+  unlockMany: (badgeIds) => {
+    const data = achievementsStorage.get();
+    badgeIds.forEach(id => {
+      if (!data.unlockedIds.includes(id)) data.unlockedIds.push(id);
+    });
+    achievementsStorage.set(data);
+  },
+  updateLastStreak: (streak) => {
+    const data = achievementsStorage.get();
+    data.lastStreakSeen = streak;
+    achievementsStorage.set(data);
+  }
+};
+
 // Onboarding flag
 export const onboardingStorage = {
   isCompleted: () => {
@@ -198,6 +227,7 @@ export const exportData = () => {
     user: userStorage.get(),
     habits: habitsStorage.get(),
     logs: logsStorage.get(),
+    achievements: achievementsStorage.get(),
     exportDate: new Date().toISOString()
   };
   return JSON.stringify(data, null, 2);
@@ -210,6 +240,7 @@ export const importData = (jsonString) => {
     if (data.user) userStorage.set(data.user);
     if (data.habits) habitsStorage.set(data.habits);
     if (data.logs) logsStorage.set(data.logs);
+    if (data.achievements) achievementsStorage.set(data.achievements);
     return true;
   } catch (error) {
     console.error('Import failed:', error);

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { habitsStorage, userStorage, logsStorage } from '../utils/storage';
+import { habitsStorage, userStorage, logsStorage, achievementsStorage } from '../utils/storage';
+import { checkAndUnlockAchievements } from '../utils/achievements';
 
 export const useHabits = () => {
   const [habits, setHabits] = useState(() => habitsStorage.get());
@@ -72,6 +73,22 @@ export const useLogs = () => {
     updateLog,
     getLog
   };
+};
+
+export const useAchievements = () => {
+  const [achievements, setAchievements] = useState(() => achievementsStorage.get());
+
+  const syncAchievements = useCallback(() => {
+    const current = achievementsStorage.get();
+    const newlyUnlocked = checkAndUnlockAchievements(current.unlockedIds);
+    if (newlyUnlocked.length > 0) {
+      achievementsStorage.unlockMany(newlyUnlocked);
+      setAchievements(achievementsStorage.get());
+    }
+    return newlyUnlocked;
+  }, []);
+
+  return { achievements, syncAchievements, setAchievements };
 };
 
 export const useLocalStorage = (key, initialValue) => {

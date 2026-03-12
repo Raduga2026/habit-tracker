@@ -6,6 +6,7 @@ import TodayScreen from './components/TodayScreen';
 import ProgressScreen from './components/ProgressScreen';
 import HabitsScreen from './components/HabitsScreen';
 import ProfileScreen from './components/ProfileScreen';
+import AchievementsScreen from './components/AchievementsScreen';
 
 function AppContent() {
   const [currentTab, setCurrentTab] = useState('today');
@@ -14,6 +15,7 @@ function AppContent() {
   const tabs = [
     { id: 'today', label: 'Сегодня', emoji: '☀️' },
     { id: 'progress', label: 'Прогресс', emoji: '📊' },
+    { id: 'achievements', label: 'Награды', emoji: '🏆' },
     { id: 'habits', label: 'Привычки', emoji: '⚙️' },
     { id: 'profile', label: 'Профиль', emoji: '👤' }
   ];
@@ -22,6 +24,7 @@ function AppContent() {
     <div className={`min-h-screen ${theme.appBg}`}>
       {currentTab === 'today' && <TodayScreen />}
       {currentTab === 'progress' && <ProgressScreen />}
+      {currentTab === 'achievements' && <AchievementsScreen />}
       {currentTab === 'habits' && <HabitsScreen />}
       {currentTab === 'profile' && <ProfileScreen />}
 

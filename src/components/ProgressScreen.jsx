@@ -1,17 +1,35 @@
 import React, { useState } from 'react';
-import { getMonthHeatmapData, getStreak, getHabitStats } from '../utils/dateHelpers';
+import {
+  getMonthHeatmapData, getStreak, getBestStreak, getHabitStats,
+  getWeeklyCompletionData, getMostProductiveDayData,
+  getTotalActiveDays, getWeeklyAverage, getBestHabit
+} from '../utils/dateHelpers';
 import { useHabits } from '../hooks/useStorage';
 import { useTheme } from '../context/ThemeContext';
 import { logsStorage } from '../utils/storage';
+import {
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip,
+  BarChart, Bar, CartesianGrid
+} from 'recharts';
 
 export default function ProgressScreen() {
   const { habits } = useHabits();
-  const { theme } = useTheme();
+  const { theme, gender } = useTheme();
   const [selectedStatsPeriod, setSelectedStatsPeriod] = useState(7);
+  const [selectedDay, setSelectedDay] = useState(null);
 
   const heatmapData = getMonthHeatmapData();
   const streak = getStreak();
+  const bestStreak = getBestStreak();
   const activeHabits = habits.filter(h => h.isActive);
+  const totalDays = getTotalActiveDays();
+  const weeklyAvg = getWeeklyAverage();
+  const bestHabit = getBestHabit();
+  const weeklyData = getWeeklyCompletionData(8);
+  const dayData = getMostProductiveDayData();
+
+  const chartColor = gender === 'male' ? '#22d3ee' : '#fb7185';
+  const chartBar = gender === 'male' ? '#3b82f6' : '#f472b6';
 
   const weeksData = [];
   let currentWeek = [];
@@ -22,9 +40,7 @@ export default function ProgressScreen() {
       currentWeek = [];
     }
   });
-  if (currentWeek.length > 0) {
-    weeksData.push(currentWeek);
-  }
+  if (currentWeek.length > 0) weeksData.push(currentWeek);
 
   const getHeatmapColor = (percentage) => {
     if (percentage === 0) return 'bg-gray-600/40';
@@ -34,7 +50,17 @@ export default function ProgressScreen() {
     return 'bg-mint-600';
   };
 
-  const [selectedDay, setSelectedDay] = useState(null);
+  const CustomTooltip = ({ active, payload, label }) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className={`${theme.cardBg} px-3 py-2 rounded-xl shadow-lg text-xs ${theme.cardText}`}>
+          <p className="font-semibold">{label}</p>
+          <p>{payload[0].value}%</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className={`min-h-screen ${theme.appBg} pb-24`}>
@@ -42,22 +68,91 @@ export default function ProgressScreen() {
       <div className={`${theme.headerBg} text-white p-6 rounded-b-3xl shadow-lg`}>
         <div className="max-w-md mx-auto">
           <h1 className="text-3xl font-bold">Твой Прогресс</h1>
-          <p className="text-sm opacity-80 mt-2">
-            Отслеживай свой путь к целям
-          </p>
+          <p className="text-sm opacity-80 mt-2">Отслеживай свой путь к целям</p>
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-md mx-auto px-4 py-6 space-y-6">
-        {/* Streak Card */}
+
+        {/* Streak Card — current + best */}
         <div className={`${theme.streakCardBg} text-white rounded-2xl p-6 shadow-lg`}>
-          <div className="text-center">
-            <div className="text-5xl font-bold mb-2">🔥</div>
-            <div className="text-gray-100 text-sm mb-1">Текущая серия</div>
-            <div className="text-4xl font-bold">{streak}</div>
-            <div className="text-sm mt-2 opacity-90">дней подряд!</div>
+          <div className="flex justify-around text-center">
+            <div>
+              <div className="text-4xl font-bold mb-1">🔥</div>
+              <div className="text-3xl font-bold">{streak}</div>
+              <div className="text-sm opacity-80 mt-1">
+                {streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'} подряд
+              </div>
+              <div className="text-xs opacity-60 mt-1">Текущая серия</div>
+            </div>
+            <div className="w-px bg-white/20 mx-2"></div>
+            <div>
+              <div className="text-4xl font-bold mb-1">🏅</div>
+              <div className="text-3xl font-bold">{bestStreak}</div>
+              <div className="text-sm opacity-80 mt-1">
+                {bestStreak === 1 ? 'день' : bestStreak < 5 ? 'дня' : 'дней'}
+              </div>
+              <div className="text-xs opacity-60 mt-1">Рекорд</div>
+            </div>
           </div>
+        </div>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className={`${theme.kpiCardBg} rounded-2xl p-4 shadow-sm`}>
+            <div className={`text-2xl font-bold ${theme.progressTextAccent}`}>{totalDays}</div>
+            <div className={`text-xs ${theme.cardText} opacity-70 mt-1`}>Дней в трекере</div>
+          </div>
+          <div className={`${theme.kpiCardBg} rounded-2xl p-4 shadow-sm`}>
+            <div className={`text-2xl font-bold ${theme.progressTextAccent}`}>{weeklyAvg}%</div>
+            <div className={`text-xs ${theme.cardText} opacity-70 mt-1`}>Выполнение за неделю</div>
+          </div>
+          {bestHabit && (
+            <div className={`${theme.kpiCardBg} rounded-2xl p-4 shadow-sm col-span-2`}>
+              <div className={`text-xs ${theme.cardText} opacity-60 mb-1`}>Лучшая привычка (30 дней)</div>
+              <div className={`text-sm font-semibold ${theme.cardText}`}>
+                {bestHabit.habit.emoji} {bestHabit.habit.title}
+              </div>
+              <div className={`text-lg font-bold ${theme.progressTextAccent} mt-1`}>
+                {bestHabit.percentage}%
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Weekly line chart */}
+        <div className={`${theme.cardBg} rounded-2xl p-5 shadow-sm`}>
+          <h2 className={`font-semibold ${theme.cardText} mb-4`}>Выполнение по неделям</h2>
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={weeklyData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gender === 'male' ? '#1e3a5c' : '#f0f0f0'} />
+              <XAxis dataKey="week" tick={{ fontSize: 10, fill: gender === 'male' ? '#94a3b8' : '#6b7280' }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: gender === 'male' ? '#94a3b8' : '#6b7280' }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Line
+                type="monotone"
+                dataKey="percentage"
+                stroke={chartColor}
+                strokeWidth={2.5}
+                dot={{ r: 4, fill: chartColor }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Day of week bar chart */}
+        <div className={`${theme.cardBg} rounded-2xl p-5 shadow-sm`}>
+          <h2 className={`font-semibold ${theme.cardText} mb-4`}>Продуктивность по дням недели</h2>
+          <ResponsiveContainer width="100%" height={160}>
+            <BarChart data={dayData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke={gender === 'male' ? '#1e3a5c' : '#f0f0f0'} />
+              <XAxis dataKey="day" tick={{ fontSize: 11, fill: gender === 'male' ? '#94a3b8' : '#6b7280' }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: gender === 'male' ? '#94a3b8' : '#6b7280' }} />
+              <Tooltip content={<CustomTooltip />} />
+              <Bar dataKey="percentage" fill={chartBar} radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
 
         {/* Heatmap */}
@@ -98,16 +193,6 @@ export default function ProgressScreen() {
                   Настроение: {logsStorage.getByDate(selectedDay.date).mood}
                 </p>
               )}
-              {logsStorage.getByDate(selectedDay.date).morningReflection && (
-                <div className={`text-xs ${theme.cardText} opacity-70 mb-2`}>
-                  <strong>Утро:</strong> {JSON.stringify(logsStorage.getByDate(selectedDay.date).morningReflection)}
-                </div>
-              )}
-              {logsStorage.getByDate(selectedDay.date).eveningReflection && (
-                <div className={`text-xs ${theme.cardText} opacity-70 mb-2`}>
-                  <strong>Вечер:</strong> {JSON.stringify(logsStorage.getByDate(selectedDay.date).eveningReflection)}
-                </div>
-              )}
               <button
                 onClick={() => setSelectedDay(null)}
                 className={`${theme.btnSecondary} mt-4 w-full py-2 rounded-2xl font-semibold`}
@@ -138,7 +223,6 @@ export default function ProgressScreen() {
               ))}
             </div>
           </div>
-
           <div className="p-4 space-y-3">
             {activeHabits.length === 0 ? (
               <p className={`text-center ${theme.cardText} opacity-60 py-4`}>

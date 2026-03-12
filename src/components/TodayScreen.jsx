@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { getTodayString, formatDate, formatDayName, getDailyProgress, getHabitsByTimeOfDay } from '../utils/dateHelpers';
-import { useLogs, useUser } from '../hooks/useStorage';
+import React, { useState, useEffect } from 'react';
+import { getTodayString, formatDate, formatDayName, getDailyProgress, getHabitsByTimeOfDay, getStreak, calculateXP } from '../utils/dateHelpers';
+import { getLevelInfo } from '../utils/achievements';
+import { useLogs, useUser, useAchievements } from '../hooks/useStorage';
 import { useTheme } from '../context/ThemeContext';
-import { logsStorage } from '../utils/storage';
+import { logsStorage, achievementsStorage } from '../utils/storage';
 import Confetti from './Confetti';
 import HabitGroup from './HabitGroup';
 
@@ -11,11 +12,26 @@ export default function TodayScreen() {
   const { logs, toggleHabit } = useLogs();
   const { user } = useUser();
   const { theme } = useTheme();
+  const { syncAchievements } = useAchievements();
   const [showConfetti, setShowConfetti] = useState(false);
+  const [streakBroke, setStreakBroke] = useState(false);
 
   const progress = getDailyProgress(today);
   const habitsByTime = getHabitsByTimeOfDay();
   const todayLog = logs[today] || { habits: {} };
+
+  const streak = getStreak();
+  const xp = calculateXP();
+  const { level } = getLevelInfo(xp);
+
+  useEffect(() => {
+    const currentStreak = getStreak();
+    const { lastStreakSeen } = achievementsStorage.get();
+    if (lastStreakSeen > 1 && currentStreak === 0) {
+      setStreakBroke(true);
+    }
+    achievementsStorage.updateLastStreak(currentStreak);
+  }, []);
 
   const handleToggleHabit = (habitId) => {
     if (habitId === 'h4') {
@@ -27,6 +43,7 @@ export default function TodayScreen() {
       if (q3 === null) return;
       logsStorage.updateDate(today, { morningReflection: { q1, q2, q3 } });
       toggleHabit(today, habitId);
+      syncAchievements();
       return;
     }
     if (habitId === 'h7') {
@@ -40,6 +57,7 @@ export default function TodayScreen() {
       if (q4 === null) return;
       logsStorage.updateDate(today, { eveningReflection: { q1, q2, q3, q4 } });
       toggleHabit(today, habitId);
+      syncAchievements();
       return;
     }
     if (habitId === 'h8') {
@@ -52,11 +70,13 @@ export default function TodayScreen() {
       if (!idx || idx < 1 || idx > 5) return;
       logsStorage.updateDate(today, { mood: moods[idx - 1] });
       toggleHabit(today, habitId);
+      syncAchievements();
       return;
     }
 
     const wasCompleted = todayLog.habits[habitId];
     toggleHabit(today, habitId);
+    syncAchievements();
 
     if (!wasCompleted) {
       const newProgress = { ...progress };
@@ -82,14 +102,44 @@ export default function TodayScreen() {
           </div>
           {user.name && (
             <div className="text-2xl sm:text-3xl italic font-semibold mt-2">
-              Привет {user.name}!
+              Привет, {user.name}!
             </div>
           )}
+          <div className="text-sm opacity-70 mt-2 italic font-light leading-snug">
+            Привычки формируют жизнь. Но без трекера они забываются очень быстро.
+          </div>
+          {/* Streak + Level mini-badge */}
+          <div className="flex items-center gap-3 mt-3">
+            {streak > 0 && (
+              <span className="text-xs bg-white/20 rounded-full px-3 py-1 font-semibold">
+                🔥 {streak} {streak === 1 ? 'день' : streak < 5 ? 'дня' : 'дней'} подряд
+              </span>
+            )}
+            <span className="text-xs bg-white/20 rounded-full px-3 py-1 font-semibold">
+              {level.emoji} {level.name}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Content */}
       <div className="max-w-md mx-auto px-4 py-6 space-y-5">
+
+        {/* Streak broke message */}
+        {streakBroke && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+            <div className="text-2xl mb-1">💪</div>
+            <p className="text-sm text-amber-800 font-medium">Серия прервалась, но ты начинаешь снова сегодня!</p>
+            <p className="text-xs text-amber-600 mt-1">Каждый день — новый старт.</p>
+            <button
+              onClick={() => setStreakBroke(false)}
+              className="text-xs text-amber-500 mt-2 underline"
+            >
+              Закрыть
+            </button>
+          </div>
+        )}
+
         {/* Progress */}
         <div className={`${theme.progressCardBg} rounded-3xl p-5 shadow-sm`}>
           <div className="flex justify-between items-center mb-3">
