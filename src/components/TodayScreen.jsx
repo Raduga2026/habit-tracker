@@ -6,6 +6,35 @@ import { useTheme } from '../context/ThemeContext';
 import { logsStorage, achievementsStorage } from '../utils/storage';
 import Confetti from './Confetti';
 import HabitGroup from './HabitGroup';
+import ReflectionModal from './ReflectionModal';
+
+function MoodModal({ onSave, onCancel, theme }) {
+  const moods = [
+    { emoji: '😃', label: 'Отлично', value: 1 },
+    { emoji: '🙂', label: 'Хорошо', value: 2 },
+    { emoji: '😐', label: 'Нейтрально', value: 3 },
+    { emoji: '😟', label: 'Не очень', value: 4 },
+    { emoji: '😢', label: 'Плохо', value: 5 },
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40">
+      <div className={`w-full max-w-md ${theme.habitGroupBg} rounded-t-3xl p-6`}>
+        <p className={`text-base font-semibold ${theme.cardText} mb-4 text-center`}>Как твоё настроение сегодня?</p>
+        <div className="flex justify-around mb-6">
+          {moods.map(m => (
+            <button key={m.value} onClick={() => onSave(m.value)} className="flex flex-col items-center gap-1">
+              <span className="text-3xl">{m.emoji}</span>
+              <span className={`text-xs ${theme.cardText} opacity-70`}>{m.label}</span>
+            </button>
+          ))}
+        </div>
+        <button onClick={onCancel} className={`w-full py-3 rounded-2xl text-sm font-medium ${theme.navBtnInactive}`}>
+          Отмена
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function TodayScreen() {
   const today = getTodayString();
@@ -15,6 +44,7 @@ export default function TodayScreen() {
   const { syncAchievements } = useAchievements();
   const [showConfetti, setShowConfetti] = useState(false);
   const [streakBroke, setStreakBroke] = useState(false);
+  const [modal, setModal] = useState(null); // { habitId, questions, storageKey }
 
   const progress = getDailyProgress(today);
   const habitsByTime = getHabitsByTimeOfDay();
@@ -33,56 +63,12 @@ export default function TodayScreen() {
     achievementsStorage.updateLastStreak(currentStreak);
   }, []);
 
-  const handleToggleHabit = (habitId) => {
-    if (habitId === 'h4') {
-      const q1 = window.prompt('Что полезного Я сделаю сегодня для себя?', '');
-      if (q1 === null) return;
-      const q2 = window.prompt('Что полезного хочу сделать для других сегодня?', '');
-      if (q2 === null) return;
-      const q3 = window.prompt('Что я хочу изменить в себе сегодня?', '');
-      if (q3 === null) return;
-      logsStorage.updateDate(today, { morningReflection: { q1, q2, q3 } });
-      toggleHabit(today, habitId);
-      syncAchievements();
-      return;
-    }
-    if (habitId === 'h7') {
-      const q1 = window.prompt('За что сегодня благодарен(а) себе?', '');
-      if (q1 === null) return;
-      const q2 = window.prompt('Что сделал(а) хорошего для других?', '');
-      if (q2 === null) return;
-      const q3 = window.prompt('Что у меня сегодня получилось хорошо?', '');
-      if (q3 === null) return;
-      const q4 = window.prompt('Чем я недоволен(а) собой сегодня?', '');
-      if (q4 === null) return;
-      logsStorage.updateDate(today, { eveningReflection: { q1, q2, q3, q4 } });
-      toggleHabit(today, habitId);
-      syncAchievements();
-      return;
-    }
-    if (habitId === 'h8') {
-      const moods = ['😃','🙂','😐','😟','😢'];
-      const choice = window.prompt(
-        'Выбери настроение (1–5):\n1 😃\n2 🙂\n3 😐\n4 😟\n5 😢',
-        '1'
-      );
-      const idx = parseInt(choice, 10);
-      if (!idx || idx < 1 || idx > 5) return;
-      logsStorage.updateDate(today, { mood: moods[idx - 1] });
-      toggleHabit(today, habitId);
-      syncAchievements();
-      return;
-    }
-
+  const finishToggle = (habitId) => {
     const wasCompleted = todayLog.habits[habitId];
     toggleHabit(today, habitId);
     syncAchievements();
-
     if (!wasCompleted) {
-      const newProgress = { ...progress };
-      newProgress.completed += 1;
-      newProgress.percentage = Math.round((newProgress.completed / newProgress.total) * 100);
-
+      const newProgress = getDailyProgress(today);
       if (newProgress.percentage === 100) {
         setShowConfetti(true);
         setTimeout(() => setShowConfetti(false), 3000);
@@ -90,9 +76,80 @@ export default function TodayScreen() {
     }
   };
 
+  const handleToggleHabit = (habitId) => {
+    if (habitId === 'h4') {
+      setModal({
+        habitId,
+        storageKey: 'morningReflection',
+        questions: [
+          'Что полезного я сделаю сегодня для себя?',
+          'Что полезного хочу сделать для других сегодня?',
+          'Что я хочу изменить в себе сегодня?',
+        ],
+      });
+      return;
+    }
+    if (habitId === 'h7') {
+      setModal({
+        habitId,
+        storageKey: 'eveningReflection',
+        questions: [
+          'За что сегодня благодарна себе?',
+          'Что сделала хорошего для других?',
+          'Что у меня сегодня получилось хорошо?',
+          'Чем я недовольна собой сегодня?',
+        ],
+      });
+      return;
+    }
+    if (habitId === 'h8') {
+      setModal({
+        habitId,
+        storageKey: 'mood',
+        questions: ['Выбери настроение:'],
+        isMood: true,
+      });
+      return;
+    }
+
+    finishToggle(habitId);
+  };
+
+  const handleModalSave = (answers) => {
+    if (!modal) return;
+    const { habitId, storageKey, isMood } = modal;
+    if (isMood) {
+      const moods = ['😃', '🙂', '😐', '😟', '😢'];
+      const idx = parseInt(answers[0], 10);
+      const mood = (idx >= 1 && idx <= 5) ? moods[idx - 1] : moods[0];
+      logsStorage.updateDate(today, { mood });
+    } else {
+      const keys = ['q1', 'q2', 'q3', 'q4'];
+      const obj = {};
+      answers.forEach((a, i) => { obj[keys[i]] = a; });
+      logsStorage.updateDate(today, { [storageKey]: obj });
+    }
+    finishToggle(habitId);
+    setModal(null);
+  };
+
   return (
     <div className={`min-h-screen ${theme.appBg} pb-24`}>
       {showConfetti && <Confetti />}
+      {modal && !modal.isMood && (
+        <ReflectionModal
+          questions={modal.questions}
+          onSave={handleModalSave}
+          onCancel={() => setModal(null)}
+        />
+      )}
+      {modal && modal.isMood && (
+        <MoodModal
+          onSave={(idx) => handleModalSave([String(idx)])}
+          onCancel={() => setModal(null)}
+          theme={theme}
+        />
+      )}
 
       {/* Header */}
       <div className={`${theme.headerBg} text-white p-6 sm:p-8 rounded-b-3xl shadow-lg`}>
